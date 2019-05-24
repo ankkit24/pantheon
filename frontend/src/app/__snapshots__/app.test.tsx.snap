@@ -26,46 +26,6 @@ exports[`App tests should render default App component 1`] = `
           type="text"
           value="*"
         />
-        <Label
-          className=""
-          isCompact={false}
-        >
-          Start At:
-        </Label>
-        <TextInput
-          aria-label={null}
-          className=""
-          id="pageNum"
-          isDisabled={false}
-          isReadOnly={false}
-          isRequired={false}
-          isValid={true}
-          onChange={[Function]}
-          onKeyDown={[Function]}
-          pattern="[0-9]*"
-          type="text"
-          value={1}
-        />
-        <Label
-          className=""
-          isCompact={false}
-        >
-          Result Count:
-        </Label>
-        <TextInput
-          aria-label={null}
-          className=""
-          id="pageCount"
-          isDisabled={false}
-          isReadOnly={false}
-          isRequired={false}
-          isValid={true}
-          onChange={[Function]}
-          onKeyDown={[Function]}
-          pattern="[0-9]*"
-          type="text"
-          value={50}
-        />
         <Button
           aria-label={null}
           className=""
@@ -93,6 +53,57 @@ exports[`App tests should render default App component 1`] = `
           variant="info"
           variantLabel={null}
         />
+        <Pagination
+          dropDirection="down"
+          itemCount={0}
+          onFirstClick={[Function]}
+          onLastClick={[Function]}
+          onNextClick={[Function]}
+          onPageInput={[Function]}
+          onPerPageSelect={[Function]}
+          onPreviousClick={[Function]}
+          onSetPage={[Function]}
+          page={1}
+          perPage={10}
+          perPageOptions={
+            Array [
+              Object {
+                "title": "10",
+                "value": 10,
+              },
+              Object {
+                "title": "20",
+                "value": 20,
+              },
+              Object {
+                "title": "50",
+                "value": 50,
+              },
+              Object {
+                "title": "100",
+                "value": 100,
+              },
+            ]
+          }
+          titles={
+            Object {
+              "currPage": "Current page",
+              "items": "items",
+              "itemsPerPage": "Items per page",
+              "optionsToggle": "Select",
+              "pages": "pages",
+              "paginationTitle": "Pagination",
+              "perPageSuffix": "per page",
+              "toFirstPage": "Go to first page",
+              "toLastPage": "Go to last page",
+              "toNextPage": "Go to next page",
+              "toPreviousPage": "Go to previous page",
+            }
+          }
+          toggleTemplate={[Function]}
+          variant="top"
+          widgetId="pagination-options-menu-top"
+        />
       </div>
       <DataList
         aria-label="Simple data list example"
@@ -107,17 +118,6 @@ exports[`App tests should render default App component 1`] = `
             className=""
             id="data-rows-header"
           >
-            <DataListCheck
-              aria-label="controlled checkbox example"
-              aria-labelledby="width-ex1-check1"
-              className="checkbox"
-              id="check"
-              isChecked={false}
-              isDisabled={false}
-              isValid={true}
-              onChange={[Function]}
-              onClick={[Function]}
-            />
             <DataListItemCells
               className=""
               dataListCells={
@@ -202,19 +202,11 @@ exports[`App tests should render default App component 1`] = `
           <DataListItemRow
             className=""
             id="data-rows"
+          />
+          <DataListItemRow
+            className=""
+            id="data-rows"
           >
-            <DataListCheck
-              aria-label="controlled checkbox example"
-              aria-labelledby="width-ex3-check1"
-              className="checkbox"
-              id=""
-              isChecked={false}
-              isDisabled={false}
-              isValid={true}
-              name=""
-              onChange={[Function]}
-              onClick={[Function]}
-            />
             <DataListItemCells
               className=""
               dataListCells={
@@ -284,6 +276,57 @@ exports[`App tests should render default App component 1`] = `
           />
         </DataListItem>
       </DataList>
+      <Pagination
+        dropDirection="down"
+        itemCount={0}
+        onFirstClick={[Function]}
+        onLastClick={[Function]}
+        onNextClick={[Function]}
+        onPageInput={[Function]}
+        onPerPageSelect={[Function]}
+        onPreviousClick={[Function]}
+        onSetPage={[Function]}
+        page={1}
+        perPage={10}
+        perPageOptions={
+          Array [
+            Object {
+              "title": "10",
+              "value": 10,
+            },
+            Object {
+              "title": "20",
+              "value": 20,
+            },
+            Object {
+              "title": "50",
+              "value": 50,
+            },
+            Object {
+              "title": "100",
+              "value": 100,
+            },
+          ]
+        }
+        titles={
+          Object {
+            "currPage": "Current page",
+            "items": "items",
+            "itemsPerPage": "Items per page",
+            "optionsToggle": "Select",
+            "pages": "pages",
+            "paginationTitle": "Pagination",
+            "perPageSuffix": "per page",
+            "toFirstPage": "Go to first page",
+            "toLastPage": "Go to last page",
+            "toNextPage": "Go to next page",
+            "toPreviousPage": "Go to previous page",
+          }
+        }
+        toggleTemplate={[Function]}
+        variant="top"
+        widgetId="pagination-options-menu-top"
+      />
       <div
         className="alert"
       />

@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
@@ -49,6 +51,23 @@ public class JcrQueryHelper {
 
         // Transform to sling resources
         return transform(result);
+    }
+
+    public int queryRaw(String query)
+            throws RepositoryException {
+        Session session = resourceResolver.adaptTo(Session.class);
+
+        QueryManager queryManager = session.getWorkspace().getQueryManager();
+        Query queryObj = queryManager.createQuery(query, Query.JCR_SQL2);
+        QueryResult result = queryObj.execute();
+        NodeIterator nodes = result.getNodes();
+        
+        int rowCount = 0;
+        while (nodes.hasNext()) {
+            Node node = nodes.nextNode();
+            rowCount+=1;
+        }
+        return rowCount;
     }
 
     /**

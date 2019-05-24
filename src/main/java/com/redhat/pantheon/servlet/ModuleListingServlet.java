@@ -39,16 +39,27 @@ public class ModuleListingServlet extends SlingSafeMethodsServlet {
     protected void doGet(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) throws ServletException, IOException {
         ModuleDataRetriever mdr = new ModuleDataRetriever(request.getResourceResolver());
         String searchParam = getParam(request, "search");
+        String countParam = getParam(request, "search");
         String keyParam = getParam(request, "key");
         String directionParam = getParam(request, "direction");
         String offset = getParam(request, "offset");
         String limit = getParam(request, "limit");
 
         try {
-            List<Map<String, Object>> payload = mdr.getModulesSort(searchParam, keyParam, directionParam, offset, limit);
             response.setContentType("application/json");
             Writer w = response.getWriter();
-            w.write(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(payload));
+            if(searchParam != ""){
+                List<Map<String, Object>> payload = mdr.getModulesSort(searchParam, keyParam, directionParam, offset, limit);
+                w.write(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(payload));
+            }else{
+                try{
+                int payload = mdr.getRowCount();
+                w.write(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(payload));
+                }catch(Exception e){
+                    log.error("/modules.json error", e);
+                    response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                }
+            }
         } catch (RepositoryException e) {
             log.error("/modules.json error", e);
             response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
