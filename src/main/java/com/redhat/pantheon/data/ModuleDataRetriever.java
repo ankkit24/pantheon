@@ -59,6 +59,20 @@ public class ModuleDataRetriever {
         }
     }
 
+    public int getRowCount() throws Exception{
+            // String query = "AND (a.[jcr:title] like " + "'%" + query + "%' " +
+            //         "OR a.[jcr:description] like " + "'%" + query + "%') ";
+
+            StringBuilder countQuery = new StringBuilder()
+                .append("select * from [nt:base] as a ")
+                .append("where [sling:resourceType] = 'pantheon/modules' ")
+                .append("and (isdescendantnode(a, '/content/repositories') ")
+                .append("or isdescendantnode(a, '/content/modules') ")
+                .append("or isdescendantnode(a, '/content/sandboxes')) ");
+            
+        return (new JcrQueryHelper(resolver).queryRaw(countQuery.toString()));
+    }
+
     private List<Map<String, Object>> getModules(String query, String orderByKey, String orderByDirection, String offset, String limit)
             throws RepositoryException {
         if (query.equals("") || query.equals("*") || query == null) {
@@ -79,7 +93,7 @@ public class ModuleDataRetriever {
                 .append("and (isdescendantnode(a, '/content/repositories') ")
                 .append("or isdescendantnode(a, '/content/modules') ")
                 .append("or isdescendantnode(a, '/content/sandboxes')) ")
-                .append(query);
+                .append(query);    
         if (!isEmpty(orderByKey) && !isEmpty(orderByDirection)) {
             queryBuilder.append(" order by a.[").append(orderByKey).append("] ").append(orderByDirection);
         }

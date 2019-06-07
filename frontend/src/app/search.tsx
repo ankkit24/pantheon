@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import {
   Alert, AlertActionCloseButton, TextInput, Label,
-  DataList, DataListItem, DataListItemRow, DataListItemCells, DataListCell, Button, Checkbox, DataListCheck, Modal, AlertActionLink
+  DataList, DataListItem, DataListItemRow, DataListItemCells, DataListCell, Button, 
+  DataListCheck, Modal, AlertActionLink, Pagination, PaginationVariant
 } from '@patternfly/react-core';
 import '@app/app.css';
 
@@ -19,20 +20,35 @@ export default class Search extends Component {
     isSortedUp: true,
     pageCount: 50,
     pageOffset: 1,
+    page: 1,
+    perPage: 10,
     redirect: false,
     redirectLocation: '',
     sortKey: '',
     initialLoad: true,
     allPaths: [''],
     isModalOpen: false,
-    confirmDelete: false
+    confirmDelete: false,
+    itemCount: 0,
+    loggedinStatus: false
   };
 
   public transientPaths : string[] = [];
-
+  
   public render() {
     const { columns, isEmptyResults, input, isSortedUp,sortKey} = this.state;
-    
+    const id = 'userID';
+    if (!this.state.loggedinStatus) {
+      fetch("/system/sling/info.sessionInfo.json")
+          .then(response => response.json())
+          .then(responseJSON => {
+              if (responseJSON[id] !== 'anonymous') {
+                  this.setState({ linkText: 'Pantheon | Log Out [' + responseJSON[id] + ']' })
+                  this.setState({ loggedinStatus: true })
+              }
+          })
+    }
+
     return (
       <React.Fragment>
         {this.state.initialLoad && this.doSearch()}
@@ -41,10 +57,6 @@ export default class Search extends Component {
             <div className="row-view">
               <Label>Search Query:</Label>
               <TextInput id="search" type="text" onKeyDown={this.getRows} onChange={(event) => this.setState({ input: event })} value={this.state.input} />
-              <Label>Start At:</Label>
-              <TextInput id="pageNum" type="text" pattern="[0-9]*" onKeyDown={this.getRows} onChange={(event) => this.setState({ pageOffset: event })} value={this.state.pageOffset} />
-              <Label>Result Count:</Label>
-              <TextInput id="pageCount" type="text" pattern="[0-9]*" onKeyDown={this.getRows} onChange={(event) => this.setState({ pageCount: event })} value={this.state.pageCount} />
               <Button onClick={this.doSearch}>Search</Button>
             </div>
             {isEmptyResults && (
@@ -61,17 +73,26 @@ export default class Search extends Component {
                 variant="info"
                 title="Search is case sensitive. Type '*' and press 'Enter' for all the modules."
               />
+              <Pagination
+                itemCount={this.state.itemCount}
+                perPage={this.state.perPage}
+                page={this.state.page}
+                onSetPage={this.onSetPage}
+                widgetId="pagination-options-menu-top"
+                onPerPageSelect={this.onPerPageSelect}
+              />
             </div>
             <DataList aria-label="Simple data list example">
               <DataListItem aria-labelledby="simple-item1">
-                <DataListItemRow id="data-rows-header" >  
+                <DataListItemRow id="data-rows-header" >
+                  {this.state.loggedinStatus &&  
                   <DataListCheck aria-labelledby="width-ex1-check1"
                         isChecked={this.state.check}
                         aria-label="controlled checkbox example"
                         id="check"
                         onClick={this.handleSelectAll}
                         isDisabled={false}
-                  />
+                  />}
                   <DataListItemCells 
                         dataListCells={[
                           <DataListCell width={2} key="title" onClick={() => this.sort("jcr:title")}>
@@ -92,15 +113,23 @@ export default class Search extends Component {
                         ]} 
                   />
                 </DataListItemRow>
+                <DataListItemRow id="data-rows" key={this.state.data["pant:transientPath"]}>
+                    {
+                      this.state.deleteButtonVisible?              
+                        <Button variant="primary" onClick={() => this.confirmDeleteOperation(event)}>Delete</Button>
+                      :null
+                    }
+                </DataListItemRow>
                 {this.state.data.map(data => (
                   <DataListItemRow id="data-rows">
+                    {this.state.loggedinStatus &&
                     <DataListCheck aria-labelledby="width-ex3-check1" 
                         isChecked={data["checkedItem"]}
                         aria-label="controlled checkbox example"
                         id={data["pant:transientPath"]}
                         name={data["pant:transientPath"]}
                         onClick={() => this.handleDeleteCheckboxChange(data["pant:transientPath"])}
-                    />
+                    />}
                     <DataListItemCells key={data["pant:transientPath"]} onClick={() => this.setPreview(data["pant:transientPath"])} 
                           dataListCells={[      
                                 <DataListCell width={2}>
@@ -131,13 +160,21 @@ export default class Search extends Component {
                 </DataListItemRow>
               </DataListItem>
             </DataList>
+            <Pagination
+                itemCount={this.state.itemCount}
+                perPage={this.state.perPage}
+                page={this.state.page}
+                onSetPage={this.onSetPage}
+                widgetId="pagination-options-menu-top"
+                onPerPageSelect={this.onPerPageSelect}
+              />
             <div className="alert">
               {this.state.confirmDelete===true && <Modal
                     isSmall
                     title="Confirmation"
                     isOpen={!this.state.isModalOpen}
                     onClose={this.hideAlertOne}
-                    actions={[<Button key="yes" variant="primary" onClick={() => this.delete(event, this.transientPaths)}>Yes</Button>,
+                    actions={[<Button key="yes" variant="primary" onClick={() => this.delete(this.transientPaths)}>Yes</Button>,
                               <Button key="no" variant="secondary" onClick={this.cancelDeleteOperation}>No</Button>]}
                     >
                       Are you sure you want to delete the selected items?
@@ -149,7 +186,7 @@ export default class Search extends Component {
                     onClose={this.hideAlertOne}
                     actions={[<Button key="cancel" variant="primary" onClick={this.hideAlertOne}>OK</Button>]}
                     >
-                      Selected items are deleted!!!
+                      Selected items are deleted
                 </Modal>}
                 {this.state.deleteState=='negative' && <Modal
                     isSmall
@@ -158,7 +195,7 @@ export default class Search extends Component {
                     onClose={this.hideAlertOne}
                     actions={[<Button key="cancel" variant="primary" onClick={this.hideAlertOne}>OK</Button>]}
                     >
-                      Selected items are not found!!!
+                      Selected items are not found
                 </Modal>}
                 {this.state.deleteState=='unknown' && <Modal
                     isSmall
@@ -167,7 +204,7 @@ export default class Search extends Component {
                     onClose={this.hideAlertOne}
                     actions={[<Button key="cancel" variant="primary" onClick={this.hideAlertOne}>OK</Button>]}
                     >
-                      An unknown error occured, please check if you are logged in!!!
+                      An unknown error occured, please check if you are logged in
                 </Modal>}
             </div>
             <div className="notification-container">
@@ -180,8 +217,7 @@ export default class Search extends Component {
         </div>
       </React.Fragment>
     );
-  }
-    
+  } 
 
   private handleSelectAll = (event) => {
     console.log('handleSelectAll')
@@ -207,14 +243,19 @@ export default class Search extends Component {
                 }
               })
         }else{
-          this.setState({countOfCheckedBoxes: this.state.countOfCheckedBoxes-this.state.data.length}, () => {
-                console.log('countOfCheckedBoxes: '+this.state.countOfCheckedBoxes)
-                if(this.state.countOfCheckedBoxes > 0){
-                  this.setState({deleteButtonVisible: true})
-                }else{
-                  this.setState({deleteButtonVisible: false})
-                }
-              })
+          if(this.state.countOfCheckedBoxes==0){
+            console.log('countOfCheckedBoxes: '+this.state.countOfCheckedBoxes)
+            this.setState({deleteButtonVisible: false})
+          }else{
+            this.setState({countOfCheckedBoxes: this.state.countOfCheckedBoxes-this.state.data.length}, () => {
+              console.log('countOfCheckedBoxes: '+this.state.countOfCheckedBoxes)
+              if(this.state.countOfCheckedBoxes > 0){
+                this.setState({deleteButtonVisible: true})
+              }else{
+                this.setState({deleteButtonVisible: false})
+              }
+            })
+          }
               this.transientPaths = []
               console.log('transientPaths:'+this.transientPaths)
         }
@@ -263,7 +304,7 @@ export default class Search extends Component {
     })
   };
 
-  delete = (event, keydata) => {
+  private delete = (keydata) => {
     console.log(keydata)
     console.log('in the delete function')
       const formData = new FormData();
@@ -296,7 +337,14 @@ export default class Search extends Component {
 
   private doSearch = () => {
     this.setState({ initialLoad: false })
-    fetch(this.buildSearchUrl())
+    fetch(this.buildSearchUrl("count"))
+    .then(response => response.json())
+    .then(responseJSON => this.setState({ itemCount: responseJSON }))
+    .then(() => {
+          console.log('total no of records: '+this.state.itemCount)
+      }
+    )
+    fetch(this.buildSearchUrl("search"))
       .then(response => response.json())
       .then(responseJSON => this.setState({ data: responseJSON }))
       .then(() => {
@@ -311,11 +359,11 @@ export default class Search extends Component {
             deleteButtonVisible: false,
             countOfCheckedBoxes: 0,
             check: false
-           }, () => {this.transientPaths=[]})
+           })
         }
-      })
+      }) 
   }
-
+  
   private setPreview(path: string) {
     console.log("what do I see when you click ? " + path)
     if (path !== "") {
@@ -353,7 +401,7 @@ export default class Search extends Component {
   };
 
   private getSortedRows() {
-    fetch(this.buildSearchUrl())
+    fetch(this.buildSearchUrl("search"))
       .then(response => response.json())
       .then(responseJSON => this.setState({ data: responseJSON }))
       .then(() => {
@@ -370,21 +418,29 @@ export default class Search extends Component {
       })
   };
 
-  private buildSearchUrl() {
-    let backend = "/modules.json?search="
-    if (this.state.input != null && this.state.input !== "") {
-      backend += this.state.input
-    } else {
-      backend += "*"
+  private buildSearchUrl(backendUrl) {
+    let backend = ""
+    if(backendUrl==="count"){
+      backend = "/modules.json?count="  
+    }else{
+      backend = "/modules.json?search="
+      if (this.state.input != null && this.state.input !== "") {
+        backend += this.state.input
+      } else {
+        backend += "*"
+      }
+      console.log("this.state.page: "+this.state.page)
+      backend += "&key=" + this.state.sortKey + "&direction=" + (this.state.isSortedUp ? "desc" : "asc")
+      backend += "&offset=" + ((this.state.page - 1)*(this.state.perPage)) + "&limit=" + this.state.perPage
     }
-    backend += "&key=" + this.state.sortKey + "&direction=" + (this.state.isSortedUp ? "desc" : "asc")
-    backend += "&offset=" + (this.state.pageOffset - 1) + "&limit=" + this.state.pageCount
     console.log(backend)  
     return backend
   }
 
   public hideAlertOne = () => this.setState({ alertOneVisible: false }, () => {
-      window.location.href = "/pantheon"
+    this.setState({
+        perPage: this.state.perPage, initialLoad: true, page: 1, deleteState: '',confirmDelete: false
+      },() => {this.doSearch});
     });
 
   public confirmDeleteOperation = (event) => this.setState({confirmDelete: !this.state.confirmDelete},() =>{
@@ -394,5 +450,17 @@ export default class Search extends Component {
   public cancelDeleteOperation = () => this.setState({confirmDelete: !this.state.confirmDelete},() =>{
     console.log('confirmDelete cancelled:'+this.state.confirmDelete)
   });
+
+  public onSetPage = (_event, pageNumber) => {
+    this.setState({
+      page: pageNumber, initialLoad: true
+    });
+  };
+
+  public onPerPageSelect = (_event, perPageRows) => {
+    this.setState({
+      perPage: perPageRows, initialLoad: true, page: 1
+    });
+  };
 
 }
