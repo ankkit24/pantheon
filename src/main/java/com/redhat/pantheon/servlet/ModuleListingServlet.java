@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by ben on 4/18/19.
@@ -39,7 +41,6 @@ public class ModuleListingServlet extends SlingSafeMethodsServlet {
     protected void doGet(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) throws ServletException, IOException {
         ModuleDataRetriever mdr = new ModuleDataRetriever(request.getResourceResolver());
         String searchParam = getParam(request, "search");
-        String countParam = getParam(request, "search");
         String keyParam = getParam(request, "key");
         String directionParam = getParam(request, "direction");
         String offset = getParam(request, "offset");
@@ -48,18 +49,16 @@ public class ModuleListingServlet extends SlingSafeMethodsServlet {
         try {
             response.setContentType("application/json");
             Writer w = response.getWriter();
-            if(searchParam != ""){
-                List<Map<String, Object>> payload = mdr.getModulesSort(searchParam, keyParam, directionParam, offset, limit);
-                w.write(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(payload));
-            }else{
-                try{
-                int payload = mdr.getRowCount();
-                w.write(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(payload));
-                }catch(Exception e){
-                    log.error("/modules.json error", e);
-                    response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-                }
+            List<Map<String, Object>> results = mdr.getModulesSort(searchParam, keyParam, directionParam, "0", Long.toString(Long.MAX_VALUE));
+            List<Map<String, Object>> payload = new ArrayList<Map<String, Object>>();
+            for (int i = Integer.parseInt(offset) ; i < Integer.parseInt(offset) + Integer.parseInt(limit) && i < results.size() ; i++) {
+                payload.add(results.get(i));
             }
+            int totalCount = results.size();
+            Map<String, Object> returnVal = new HashMap<String, Object>();
+            returnVal.put("count", totalCount);
+            returnVal.put("data", payload);
+            w.write(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(returnVal));
         } catch (RepositoryException e) {
             log.error("/modules.json error", e);
             response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);

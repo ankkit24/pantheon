@@ -53,23 +53,6 @@ public class JcrQueryHelper {
         return transform(result);
     }
 
-    public int queryRaw(String query)
-            throws RepositoryException {
-        Session session = resourceResolver.adaptTo(Session.class);
-
-        QueryManager queryManager = session.getWorkspace().getQueryManager();
-        Query queryObj = queryManager.createQuery(query, Query.JCR_SQL2);
-        QueryResult result = queryObj.execute();
-        NodeIterator nodes = result.getNodes();
-        
-        int rowCount = 0;
-        while (nodes.hasNext()) {
-            Node node = nodes.nextNode();
-            rowCount+=1;
-        }
-        return rowCount;
-    }
-
     /**
      * A convenience method to run a query against the JCR Repository adding limit and offset values useful for
      * pagination.

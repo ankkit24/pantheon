@@ -59,20 +59,6 @@ public class ModuleDataRetriever {
         }
     }
 
-    public int getRowCount() throws Exception{
-            // String query = "AND (a.[jcr:title] like " + "'%" + query + "%' " +
-            //         "OR a.[jcr:description] like " + "'%" + query + "%') ";
-
-            StringBuilder countQuery = new StringBuilder()
-                .append("select * from [nt:base] as a ")
-                .append("where [sling:resourceType] = 'pantheon/modules' ")
-                .append("and (isdescendantnode(a, '/content/repositories') ")
-                .append("or isdescendantnode(a, '/content/modules') ")
-                .append("or isdescendantnode(a, '/content/sandboxes')) ");
-            
-        return (new JcrQueryHelper(resolver).queryRaw(countQuery.toString()));
-    }
-
     private List<Map<String, Object>> getModules(String query, String orderByKey, String orderByDirection, String offset, String limit)
             throws RepositoryException {
         if (query.equals("") || query.equals("*") || query == null) {
@@ -80,6 +66,14 @@ public class ModuleDataRetriever {
         } else {
             query = "AND (a.[jcr:title] like " + "'%" + query + "%' " +
                     "OR a.[jcr:description] like " + "'%" + query + "%') ";
+        }
+
+        if(limit==null){
+            limit = Long.toString(Long.MAX_VALUE);
+        }
+        
+        if(offset==null){
+            offset = "0";
         }
 
         //FIXME - we had "select * from [pant:module]..." here, BUT we were seeing problems that after a very small
@@ -98,10 +92,7 @@ public class ModuleDataRetriever {
             queryBuilder.append(" order by a.[").append(orderByKey).append("] ").append(orderByDirection);
         }
 
-        long lOffset = offset == null ? 0 : Long.valueOf(offset);
-        long lLimit = limit == null ? Long.MAX_VALUE : Long.valueOf(limit);
-
-        Stream<Resource> results = new JcrQueryHelper(resolver).query(queryBuilder.toString(), lLimit, lOffset);
+        Stream<Resource> results = new JcrQueryHelper(resolver).query(queryBuilder.toString(), Long.valueOf(limit), Long.valueOf(offset));
 
         return results.map(r -> {
             Map<String, Object> m = new HashMap(r.getValueMap());

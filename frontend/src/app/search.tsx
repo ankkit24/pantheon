@@ -222,15 +222,13 @@ export default class Search extends Component {
         const selectAllcheck = this.state.data.map(dataitem => {
               dataitem["checkedItem"] = this.state.check
               console.log(dataitem["pant:transientPath"]+":"+dataitem["checkedItem"])
-              this.state.check?this.state.allPaths.push(dataitem["pant:transientPath"]):delete this.state.allPaths[this.state.allPaths.indexOf(dataitem["pant:transientPath"])]
+              this.state.check?this.state.allPaths.push(dataitem["pant:transientPath"]): this.state.allPaths.splice(this.state.allPaths.indexOf(dataitem["pant:transientPath"]),1)
           return dataitem
         })
         this.transientPaths=this.state.allPaths
-        this.transientPaths.map(e => e === "" ? delete this.transientPaths[this.transientPaths.indexOf(e)] : e)
-        console.log('final transientPaths:'+this.transientPaths)
-        console.log('all paths out:'+this.state.allPaths)
+        this.transientPaths.map(e => e === "" ? this.transientPaths.splice(this.transientPaths.indexOf(e)) : e)
         if(this.state.check === true){
-          this.setState({countOfCheckedBoxes: this.state.countOfCheckedBoxes+this.state.data.length}, () => {
+          this.setState({countOfCheckedBoxes: this.state.data.length}, () => {
                 console.log('countOfCheckedBoxes: '+this.state.countOfCheckedBoxes)
                 if(this.state.countOfCheckedBoxes > 0){
                   this.setState({deleteButtonVisible: true})
@@ -239,19 +237,10 @@ export default class Search extends Component {
                 }
               })
         }else{
-          if(this.state.countOfCheckedBoxes==0){
-            console.log('countOfCheckedBoxes: '+this.state.countOfCheckedBoxes)
-            this.setState({deleteButtonVisible: false})
-          }else{
-            this.setState({countOfCheckedBoxes: this.state.countOfCheckedBoxes-this.state.data.length}, () => {
+            this.setState({countOfCheckedBoxes: 0}, () => {
               console.log('countOfCheckedBoxes: '+this.state.countOfCheckedBoxes)
-              if(this.state.countOfCheckedBoxes > 0){
-                this.setState({deleteButtonVisible: true})
-              }else{
                 this.setState({deleteButtonVisible: false})
-              }
             })
-          }
               this.transientPaths = []
               console.log('transientPaths:'+this.transientPaths)
         }
@@ -288,7 +277,7 @@ export default class Search extends Component {
                 this.setState({deleteButtonVisible: false})
               }
             })
-            delete this.transientPaths[this.transientPaths.indexOf(id)]
+            this.transientPaths.splice(this.transientPaths.indexOf(id))
             console.log('transientPaths:'+this.transientPaths)
           }
         }
@@ -333,16 +322,9 @@ export default class Search extends Component {
 
   private doSearch = () => {
     this.setState({ initialLoad: false })
-    fetch(this.buildSearchUrl("count"))
-    .then(response => response.json())
-    .then(responseJSON => this.setState({ itemCount: responseJSON }))
-    .then(() => {
-          console.log('total no of records: '+this.state.itemCount)
-      }
-    )
-    fetch(this.buildSearchUrl("search"))
+    fetch(this.buildSearchUrl())
       .then(response => response.json())
-      .then(responseJSON => this.setState({ data: responseJSON }))
+      .then(responseJSON => this.setState({ data: responseJSON.data, itemCount: responseJSON.count }))
       .then(() => {
         if (JSON.stringify(this.state.data) === "[]") {
           this.setState({
@@ -397,7 +379,7 @@ export default class Search extends Component {
   };
 
   private getSortedRows() {
-    fetch(this.buildSearchUrl("search"))
+    fetch(this.buildSearchUrl())
       .then(response => response.json())
       .then(responseJSON => this.setState({ data: responseJSON }))
       .then(() => {
@@ -414,21 +396,17 @@ export default class Search extends Component {
       })
   };
 
-  private buildSearchUrl(backendUrl) {
+  private buildSearchUrl() {
     let backend = ""
-    if(backendUrl==="count"){
-      backend = "/modules.json?count="
-    }else{
-      backend = "/modules.json?search="
-      if (this.state.input != null && this.state.input !== "") {
-        backend += this.state.input
-      } else {
-        backend += "*"
-      }
-      console.log("this.state.page: "+this.state.page)
-      backend += "&key=" + this.state.sortKey + "&direction=" + (this.state.isSortedUp ? "desc" : "asc")
-      backend += "&offset=" + ((this.state.page - 1)*(this.state.perPage)) + "&limit=" + this.state.perPage
+    backend = "/modules.json?search="
+    if (this.state.input != null && this.state.input !== "") {
+      backend += this.state.input
+    } else {
+      backend += "*"
     }
+    console.log("this.state.page: "+this.state.page)
+    backend += "&key=" + this.state.sortKey + "&direction=" + (this.state.isSortedUp ? "desc" : "asc")
+    backend += "&offset=" + ((this.state.page - 1)*(this.state.perPage)) + "&limit=" + this.state.perPage
     console.log(backend)
     return backend
   }
