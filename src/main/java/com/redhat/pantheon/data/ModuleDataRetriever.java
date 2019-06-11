@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.query.RowIterator;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +43,13 @@ public class ModuleDataRetriever {
 			direction = "asc";
 		}
 		return getModules(searchTerm, key, direction, offset, limit);
+    }
+    
+    public long countModules(String searchTerm) throws RepositoryException {
+		if (searchTerm == null || searchTerm.isEmpty()) {
+			searchTerm.equals("*");
+		}
+		return new JcrQueryHelper(resolver).count();
 	}
 
     public List<Map<String, Object>> getModulesNameSort(String searchTerm) {

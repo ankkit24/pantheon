@@ -53,6 +53,26 @@ public class JcrQueryHelper {
         return transform(result);
     }
 
+    public long count()
+        throws RepositoryException {
+            Session session = resourceResolver.adaptTo(Session.class);
+            StringBuilder queryBuilder = new StringBuilder()
+                .append("select * from [nt:base] as a ")
+                .append("where [sling:resourceType] = 'pantheon/modules' ")
+                .append("and (isdescendantnode(a, '/content/repositories') ")
+                .append("or isdescendantnode(a, '/content/modules') ")
+                .append("or isdescendantnode(a, '/content/sandboxes')) ");
+
+            QueryManager queryManager = session.getWorkspace().getQueryManager();
+            Query queryObj = queryManager.createQuery(queryBuilder.toString(), Query.JCR_SQL2);
+            // queryObj.setLimit(limit);
+            // queryObj.setOffset(offset);
+            QueryResult result = queryObj.execute();
+    
+            // Transform to sling resources
+            return result.getRows().getSize();
+    }
+
     /**
      * A convenience method to run a query against the JCR Repository adding limit and offset values useful for
      * pagination.

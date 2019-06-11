@@ -381,7 +381,7 @@ export default class Search extends Component {
   private getSortedRows() {
     fetch(this.buildSearchUrl())
       .then(response => response.json())
-      .then(responseJSON => this.setState({ data: responseJSON }))
+      .then(responseJSON => this.setState({ data: responseJSON.data, itemCount: responseJSON.count }))
       .then(() => {
         if (JSON.stringify(this.state.data) === "[]") {
           this.setState({

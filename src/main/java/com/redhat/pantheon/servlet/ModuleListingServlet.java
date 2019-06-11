@@ -50,13 +50,15 @@ public class ModuleListingServlet extends SlingSafeMethodsServlet {
             response.setContentType("application/json");
             Writer w = response.getWriter();
             List<Map<String, Object>> results = mdr.getModulesSort(searchParam, keyParam, directionParam, "0", Long.toString(Long.MAX_VALUE));
+            
             List<Map<String, Object>> payload = new ArrayList<Map<String, Object>>();
             for (int i = Integer.parseInt(offset) ; i < Integer.parseInt(offset) + Integer.parseInt(limit) && i < results.size() ; i++) {
                 payload.add(results.get(i));
             }
             int totalCount = results.size();
             Map<String, Object> returnVal = new HashMap<String, Object>();
-            returnVal.put("count", totalCount);
+            // returnVal.put("count", totalCount);
+            returnVal.put("count", mdr.countModules(searchParam));
             returnVal.put("data", payload);
             w.write(new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(returnVal));
         } catch (RepositoryException e) {
