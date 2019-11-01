@@ -18,6 +18,7 @@ export interface ISearchState {
   columns: string[]
   confirmDelete: boolean
   deleteState: string
+  filterQuery: string
   input: string
   isEmptyResults: boolean
   isModalOpen: boolean
@@ -49,6 +50,7 @@ class Search extends Component<IAppState, ISearchState> {
       columns: ['Name', 'Description', 'Source Type', 'Source Name', 'Upload Time'],
       confirmDelete: false,
       deleteState: '',
+      filterQuery: '',
       input: '',
       isEmptyResults: false,
       isModalOpen: false,
@@ -79,6 +81,7 @@ class Search extends Component<IAppState, ISearchState> {
 
     return (
       <React.Fragment>
+        {console.log("This is the query: " + this.state.filterQuery)}
         <div>
           <div>
           <SearchFilter
@@ -88,6 +91,7 @@ class Search extends Component<IAppState, ISearchState> {
             onClick={this.newSearch}
             onSort={this.setSortedUp}
             isSortedUp={this.state.isSortedUp}
+            filterQuery={this.setQuery}
             />
             <div className="notification-container">
               <Pagination
@@ -288,9 +292,10 @@ class Search extends Component<IAppState, ISearchState> {
 
   private handleDeleteCheckboxChange = (checked: boolean, event: FormEvent<HTMLInputElement>) => {
     const newResults: any[] = []
+    const nameStr = 'name'
     this.state.results.map(data => {
       newResults.push(JSON.parse(JSON.stringify(data))) // clones the object
-      if (data[Search.KEY_TRANSIENTPATH] === event.target['name']) {
+      if (data[Search.KEY_TRANSIENTPATH] === event.target[nameStr]) {
         newResults[newResults.length - 1][Search.KEY_CHECKEDITEM] = checked
       }
     })
@@ -403,6 +408,10 @@ class Search extends Component<IAppState, ISearchState> {
   private setSortedUp = () => {
     this.setState({ isSortedUp: !this.state.isSortedUp }, () => {      this.getSortedRows()
     })
+  };
+
+  private setQuery = (prod: string) => {
+    this.setState({ filterQuery: prod })
   };
 
   private getSortedRows() {
