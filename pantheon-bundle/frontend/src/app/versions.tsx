@@ -9,6 +9,7 @@ import {
 import CheckImage from '@app/images/check_image.jpg'
 import BlankImage from '@app/images/blank.jpg'
 import { Redirect } from 'react-router-dom'
+import { Fields } from '@app/Constants'
 
 export interface IProps {
     modulePath: string
@@ -20,7 +21,7 @@ export interface IProps {
 
 class Versions extends Component<IProps, any> {
     private static USE_CASES = ['Select Use Case', 'Administer', 'Deploy', 'Develop', 'Install', 'Migrate', 'Monitor', 'Network', 'Plan', 'Provision', 'Release', 'Troubleshoot', 'Optimize']
-
+    
     public draft = [{ "type":"draft","icon": BlankImage, "path": "", "version": "", "publishedState": 'Not published', "updatedDate": "", "firstButtonType": 'primary', "secondButtonType": 'secondary', "firstButtonText": 'Publish', "secondButtonText": 'Preview', "isDropdownOpen": false, "isArchiveDropDownOpen": false, "metadata": '' }]
     public release = [{ "type":"release","icon": CheckImage, "path": "", "version": "", "publishedState": 'Released', "updatedDate": "", "firstButtonType": 'secondary', "secondButtonType": 'primary', "firstButtonText": 'Unpublish', "secondButtonText": 'View', "isDropdownOpen": false, "isArchiveDropDownOpen": false, "metadata": '',"draftUploadDate": "" }]
 
@@ -549,12 +550,13 @@ class Versions extends Component<IProps, any> {
     private handleURLInput = moduleUrl => {
         this.setState({ moduleUrl })
     }
+    
 
     private fetchProductVersionDetails = () => {
 
-        const path = '/content/products.3.json'
-        let key
+        const path = '/content/products.harray.3.json'
         const products = new Array()
+        
 
         fetch(path)
             .then((response) => {
@@ -569,47 +571,30 @@ class Versions extends Component<IProps, any> {
                 }
             })
             .then(responseJSON => {
-                // tslint:disable-next-line: prefer-for-of
-                for (let i = 0; i < Object.keys(responseJSON).length; i++) {
-                    key = Object.keys(responseJSON)[i]
-                    const nameKey = "name"
-                    const versionKey = "versions"
-                    if ((key !== 'jcr:primaryType')) {
-                        if (responseJSON[key][nameKey] !== undefined) {
-                            const pName = responseJSON[key][nameKey]
-                            const versionObj = responseJSON[key][versionKey]
-
-                            if (versionObj) {
-                                let vKey
-                                const versions = [{ value: '', label: 'Select a Version', disabled: false }]
-                                // tslint:disable-next-line: no-shadowed-variable
-                                const nameKey = "name"
-                                const uuidKey = "jcr:uuid"
-                                for (const item in Object.keys(versionObj)) {
-                                    if (Object.keys(versionObj)[item] !== undefined) {
-                                        vKey = Object.keys(versionObj)[item]
-
-                                        if (vKey !== 'jcr:primaryType') {
-                                            if (versionObj[vKey][nameKey]) {
-                                                versions.push({ value: versionObj[vKey][uuidKey], label: versionObj[vKey][nameKey], disabled: false })
-                                            }
-                                        }
-                                    }
-                                }
-
-                                products[pName] = versions
-                            }
-                        }
-                    }
+            
+            for(const prod of responseJSON.__children__){
+                const productDetails = prod
+                const pName = prod.__name__
+    
+                const versionDetails = productDetails.__children__[0].__children__
+                const versions = [{ value: '', label: 'Select a Version', disabled: false }]
+    
+                for (const detail of versionDetails) {
+                    // console.log("version name:",versionDetails[i].__name__)
+                    // console.log("version uuid:",versionDetails[i]["jcr:uuid"])
+                    versions.push({ value: detail[Fields.JCR_UUID], label: detail.__name__, disabled: false })
                 }
+                products[pName] = versions    
+            }
+        
                 this.setState({
                     allProducts: products
                 })
 
                 if (products) {
                     const productItems = [{ value: 'Select a Product', label: 'Select a Product', disabled: false }]
-                    // tslint:disable-next-line: forin
-                    for (const item in products) {
+                    
+                    for (const item of products) {
                         // console.log("[render] item ", item)
                         productItems.push({ value: item, label: item, disabled: false })
                     }
