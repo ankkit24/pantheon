@@ -3,7 +3,9 @@ import {
   Button, ButtonVariant, TextInput, InputGroup, Chip, ChipGroup, ChipGroupToolbarItem, FormSelect, FormSelectOption
 } from '@patternfly/react-core';
 import '@app/app.css';
-import { SearchIcon, SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
+import { CaretDownIcon, SearchIcon, SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
+import { Grid, GridItem } from '@patternfly/react-core';
+import { Fields } from '@app/Constants'
 
 class SearchFilter extends Component<any, any> {
   constructor(props) {
@@ -65,43 +67,55 @@ class SearchFilter extends Component<any, any> {
     return (
       <React.Fragment>
         <div className="row-filter" >
-          <InputGroup className="small-margin">
-            <TextInput id="searchFilterInput" type="text" onKeyDown={this.props.onKeyDown} value={this.state.searchText} onChange={this.setSearchText} />
-            <Button onClick={this.props.onClick} variant={ButtonVariant.control} aria-label="search button for search input">
-              <SearchIcon />
-            </Button>
-          </InputGroup>
+          <Grid gutter="md">
+            <GridItem span={4}>
+              <InputGroup className="small-margin">
+                <TextInput id="searchFilterInput" type="text" onKeyDown={this.props.onKeyDown} value={this.state.searchText} onChange={this.setSearchText} />
+                <Button onClick={this.props.onClick} variant={ButtonVariant.control} aria-label="search button for search input">
+                  <SearchIcon />
+                </Button>
+              </InputGroup>
+            </GridItem>
 
+            <GridItem span={3}>
+              <FormSelect value={this.state.productValue} onChange={this.onChangeProduct} aria-label="FormSelect Product" id="productForm">
+                {this.state.productOptions.map((option, index) => (
+                  <FormSelectOption isDisabled={option.disabled} key={index} value={option.value} label={option.label} />
+                ))}
+              </FormSelect>
+            </GridItem>
 
-          <FormSelect value={this.state.productValue} onChange={this.onChangeProduct} aria-label="FormSelect Product" id="productForm">
-            {this.state.productOptions.map((option, index) => (
-              <FormSelectOption isDisabled={option.disabled} key={index} value={option.value} label={option.label} />
-            ))}
-          </FormSelect>
+            <GridItem span={2}>
+              <FormSelect className="small-margin" value={this.state.versionUUID} onChange={this.onChangeVersion} aria-label="FormSelect Version" id="productVersionForm">
+                {verOptions.map((option) => (
+                  <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
+                ))}
+              </FormSelect>
+            </GridItem>
 
-          <FormSelect className="small-margin" value={this.state.versionUUID} onChange={this.onChangeVersion} aria-label="FormSelect Version" id="productVersionForm">
-            {verOptions.map((option) => (
-              <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
-            ))}
-          </FormSelect>
+            <GridItem span={1}>
+              <FormSelect className="small-margin" value={this.state.moduleTypeValue} onChange={this.onChangeModuleType} aria-label="FormSelect ModuleType" id="moduleTypeForm">
+                {moduleTypeItems.map((option) => (
+                  <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
+                ))}
+              </FormSelect>
+            </GridItem>
 
-          <FormSelect className="small-margin" value={this.state.moduleTypeValue} onChange={this.onChangeModuleType} aria-label="FormSelect ModuleType" id="moduleTypeForm">
-            {moduleTypeItems.map((option) => (
-              <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
-            ))}
-          </FormSelect>
+            <GridItem span={1}>
+              <FormSelect className="small-margin" value={this.state.sortByValue} onChange={this.onChangeSort} aria-label="FormSelect Sort" id="sortForm">
+                {sortItems.map((option) => (
+                  <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
+                ))}
+              </FormSelect>
+            </GridItem>
 
-          <FormSelect className="small-margin" value={this.state.sortByValue} onChange={this.onChangeSort} aria-label="FormSelect Sort" id="sortForm">
-            {sortItems.map((option) => (
-              <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
-            ))}
-          </FormSelect>
-
-          <Button onClick={this.setSortedUp} variant={ButtonVariant.control} aria-label="search button for search input">
-            {this.state.isSortedUp ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
-          </Button>
-
-
+            <GridItem span={1}>
+              <Button onClick={this.setSortedUp} variant={ButtonVariant.control} aria-label="search button for search input">
+                {this.state.isSortedUp ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
+              </Button>
+            </GridItem>
+          </Grid>
+  
         </div>
         <ChipGroup withToolbar={true}>
           {chipGroups.map(currentGroup => (
@@ -115,7 +129,7 @@ class SearchFilter extends Component<any, any> {
           ))}
         </ChipGroup>
       </React.Fragment>
-
+      
     );
   }
 
@@ -131,8 +145,7 @@ class SearchFilter extends Component<any, any> {
 
   private fetchProductVersionDetails = () => {
 
-    const path = '/content/products.3.json'
-    let key
+    const path = '/content/products.harray.3.json'
     const products = new Array()
     const prodUUID = new Array()
 
@@ -147,44 +160,29 @@ class SearchFilter extends Component<any, any> {
         }
       })
       .then(responseJSON => {
-        for (const i of Object.keys(responseJSON)) {
-          key = i
-          const nameKey = "name"
-          const versionKey = "versions"
-          const uuidKey = "jcr:uuid";
-          if ((key !== 'jcr:primaryType')) {
-            if (responseJSON[key][nameKey] !== undefined) {
-              const pName = responseJSON[key][nameKey]
-              const versionObj = responseJSON[key][versionKey]
-              const productUUID = responseJSON[key][uuidKey]
-              if (versionObj) {
-                let vKey;
-                const versions = [{ value: '', label: 'Select a Version', disabled: false }, { value: 'All', label: 'All', disabled: false },]
-                for (const item in Object.keys(versionObj)) {
-                  if (Object.keys(versionObj)[item] !== undefined) {
-                    vKey = Object.keys(versionObj)[item]
-                    if (vKey !== 'jcr:primaryType') {
-                      if (versionObj[vKey][nameKey]) {
-                        versions.push({ value: versionObj[vKey][uuidKey], label: versionObj[vKey][nameKey], disabled: false })
-                      }
-                    }
-                  }
-                }
-                products[pName] = versions
-                prodUUID[pName] = productUUID
-              }
-            }
+        for(const prod of responseJSON.__children__){
+          const productDetails = prod
+          const pName = prod.__name__
+
+          const versionDetails = productDetails.__children__[0].__children__
+          const versions = [{ value: '', label: 'Select a Version', disabled: false }]
+
+          for (const detail of versionDetails) {
+              // console.log("version name:",versionDetails[i].__name__)
+              // console.log("version uuid:",versionDetails[i]["jcr:uuid"])
+              versions.push({ value: detail[Fields.JCR_UUID], label: detail.__name__, disabled: false })
           }
-        }
+          products[pName] = versions
+          prodUUID[pName] = prod[Fields.JCR_UUID]
+      }
         this.setState({
-          allProducts: products,
-          productsUUID: prodUUID
+          allProducts: products
         })
 
         if (products) {
           const productItems = [{ value: 'Select a Product', label: 'Select a Product', disabled: false },]
-          // tslint:disable-next-line: forin
-          for (const item in products) {
+          
+          for (const item of products) {
             productItems.push({ value: item, label: item, disabled: false })
           }
           if (productItems.length > 1) {
@@ -220,12 +218,12 @@ class SearchFilter extends Component<any, any> {
 
   private onChangeSort = (sortByValue) => {
     this.setState({ sortByValue }, () => {
-      this.setQuery();
+        this.setQuery();
     });
   }
   private onChangeModuleType = (moduleTypeValue) => {
     this.setState({ moduleTypeValue }, () => {
-      this.setQuery();
+        this.setQuery();
     });
   }
 

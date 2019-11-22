@@ -82,6 +82,7 @@ class Search extends Component<IAppState, ISearchState> {
 
     return (
       <React.Fragment>
+        {console.log("This is the query: " + this.state.filterQuery)}
         <div>
           <div>
             <SearchFilter
