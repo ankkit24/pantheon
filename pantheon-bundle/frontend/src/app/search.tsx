@@ -1,8 +1,8 @@
 import React, { Component, FormEvent } from 'react'
 import {
-  Alert, AlertActionCloseButton, TextInput,
+  Alert, AlertActionCloseButton,
   DataList, DataListItem, DataListItemRow, DataListItemCells,
-  DataListCell, FormGroup, Button, Modal,
+  DataListCell, Button, Modal,
   Level, LevelItem, Checkbox
 } from '@patternfly/react-core'
 import '@app/app.css'
@@ -10,7 +10,8 @@ import { BuildInfo } from './components/Chrome/Header/BuildInfo'
 import { Pagination } from '@app/Pagination'
 import { BrowserRouter as Router, Route, Link, Switch } from 'react-router-dom'
 import { IAppState } from '@app/app'
-import { SearchFilter } from '@app/searchFilter'
+import { SearchFilter } from '@app/searchFilter';
+import SpinImage from '@app/images/spin.gif';
 
 export interface ISearchState {
   alertOneVisible: boolean
@@ -19,10 +20,10 @@ export interface ISearchState {
   confirmDelete: boolean
   deleteState: string
   filterQuery: string
-  input: string
   isEmptyResults: boolean
   isModalOpen: boolean
-  isSortedUp: boolean
+  isSearchException: boolean
+  displayLoadIcon: boolean
   moduleName: string
   modulePath: string
   moduleType: string
@@ -50,11 +51,11 @@ class Search extends Component<IAppState, ISearchState> {
       columns: ['Name', 'Description', 'Source Type', 'Source Name', 'Upload Time'],
       confirmDelete: false,
       deleteState: '',
+      displayLoadIcon: true,
       filterQuery: '',
-      input: '',
       isEmptyResults: false,
       isModalOpen: false,
-      isSortedUp: true,
+      isSearchException: false,
       moduleName: '',
       modulePath: '',
       moduleType: '',
@@ -84,14 +85,11 @@ class Search extends Component<IAppState, ISearchState> {
         {console.log("This is the query: " + this.state.filterQuery)}
         <div>
           <div>
-          <SearchFilter
-            onKeyDown={this.getRows} 
-            onChange={this.setInput} 
-            value={this.state.input}
-            onClick={this.newSearch}
-            onSort={this.setSortedUp}
-            isSortedUp={this.state.isSortedUp}
-            filterQuery={this.setQuery}
+            <SearchFilter
+              onKeyDown={this.getRows}
+              onClick={this.newSearch}
+              filterQuery={this.setQuery}
+              // we could add one that monitors for changes and when is tru we run getRows. To discuss.
             />
             <div className="notification-container">
               <Pagination
@@ -121,10 +119,10 @@ class Search extends Component<IAppState, ISearchState> {
                   <DataListItemCells
                     dataListCells={[
                       <DataListCell width={2} key="title">
-                        <button onClick={this.sortByName} className="sp-prop" id="span-name" aria-label="sort column by name">Name</button>
+                        <span className="sp-prop-nosort" id="span-name" aria-label="column name">Name</span>
                       </DataListCell>,
                       <DataListCell width={2} key="description">
-                        <button onClick={this.sortByDescription} className="sp-prop" id="span-name" aria-label="sort column by description">Description</button>
+                        <span className="sp-prop-nosort" id="span-name" aria-label="column description">Description</span>
                       </DataListCell>,
                       <DataListCell key="resource source">
                         <span className="sp-prop-nosort" id="span-source-type">Source Type</span>
@@ -133,7 +131,7 @@ class Search extends Component<IAppState, ISearchState> {
                         <span className="sp-prop-nosort" id="span-source-name">Source Name</span>
                       </DataListCell>,
                       <DataListCell key="upload time">
-                        <button onClick={this.sortByUploadTime} className="sp-prop" id="span-name" aria-label="sort column by upload time">Upload Time</button>
+                        <span className="sp-prop-nosort" id="span-name" aria-label="column upload time">Upload Time</span>
                       </DataListCell>,
                     ]}
                   />
@@ -146,7 +144,22 @@ class Search extends Component<IAppState, ISearchState> {
                       : null
                   }
                 </DataListItemRow>
-                {this.state.results.map((data, key) => (
+                {this.state.displayLoadIcon && (
+                  <Level gutter="md">
+                    <LevelItem />
+                    <LevelItem>
+                      <div className="notification-container">
+                        <br />
+                        <br />
+                          <img src={SpinImage} alt="Spinlogo"/>
+                        <br />
+                        <br />
+                      </div></LevelItem>
+                    <LevelItem />
+                  </Level>
+
+                )}
+                {!this.state.displayLoadIcon && (this.state.results.map((data, key) => (
                   <DataListItemRow id="data-rows" key={key}>
                     {this.props.userAuthenticated && !this.state.isEmptyResults &&
                       <Checkbox aria-labelledby="width-ex3-check1"
@@ -183,7 +196,8 @@ class Search extends Component<IAppState, ISearchState> {
                       ]}
                     />
                   </DataListItemRow>
-                ))}
+                )))}
+
                 {/* Delete button at the bottom */}
                 <DataListItemRow id="data-rows" key={this.state.results[Search.KEY_TRANSIENTPATH]}>
                   {
@@ -202,7 +216,7 @@ class Search extends Component<IAppState, ISearchState> {
                         <br />
                         <Alert
                           variant="warning"
-                          title={"No modules found with your search of: " + this.state.input}
+                          title={"No modules found with your search"}
                           action={<AlertActionCloseButton onClose={this.dismissNotification} />}
                         />
                         <br />
@@ -211,6 +225,24 @@ class Search extends Component<IAppState, ISearchState> {
                     <LevelItem />
                   </Level>
 
+                )}
+                {this.state.isSearchException && (
+                  <Level gutter="md">
+                    <LevelItem />
+                    <LevelItem>
+                      <div className="notification-container">
+                        <br />
+                        <br />
+                        <Alert
+                          variant="danger"
+                          title={"Error in fetching search results"}
+                          action={<AlertActionCloseButton onClose={this.dismissNotification} />}
+                        />
+                        <br />
+                        <br />
+                      </div></LevelItem>
+                    <LevelItem />
+                  </Level>
                 )}
               </DataListItem>
             </DataList>
@@ -275,8 +307,6 @@ class Search extends Component<IAppState, ISearchState> {
     );
   }
 
-  private setInput = (event) => this.setState({ input: event });
-
   private handleSelectAll = (checked: boolean, event: FormEvent<HTMLInputElement>) => {
     const newResults: any[] = []
     this.state.results.map(dataitem => {
@@ -329,9 +359,7 @@ class Search extends Component<IAppState, ISearchState> {
 
   private getRows = (event) => {
     if (event.key === 'Enter') {
-      this.setState({ page: 1 }, () => {
-        this.doSearch()
-      })
+      this.newSearch()
     }
   };
 
@@ -343,17 +371,20 @@ class Search extends Component<IAppState, ISearchState> {
 
   // Handle gateway timeout on slow connections.
   private doSearch = () => {
+    this.setState({ displayLoadIcon: true })
     fetch(this.buildSearchUrl())
       .then(response => response.json())
       .then(responseJSON => this.setState({ results: responseJSON.results, nextPageRowCount: responseJSON.hasNextPage ? 1 : 0 }))
       .then(() => {
         if (JSON.stringify(this.state.results) === "[]") {
           this.setState({
+            displayLoadIcon: false,
             isEmptyResults: true,
             selectAllCheckValue: false
           })
         } else {
           this.setState({
+            displayLoadIcon: false,
             isEmptyResults: false,
             selectAllCheckValue: false,
           })
@@ -361,7 +392,11 @@ class Search extends Component<IAppState, ISearchState> {
       })
       .catch(error => {
         // might be a timeout error
-        console.log("[doSearch] error ", error)
+        this.setState({
+          displayLoadIcon: false,
+          isSearchException: true
+        },()=>{ console.log("[doSearch] error ", error) })
+        
       })
   }
 
@@ -382,54 +417,16 @@ class Search extends Component<IAppState, ISearchState> {
   };
 
   private dismissNotification = () => {
-    this.setState({ isEmptyResults: false });
-  };
-
-  private sortByName = () => {
-    this.sort("jcr:title")
-  }
-
-  private sortByDescription = () => {
-    this.sort("jcr:description")
-  }
-
-  private sortByUploadTime = () => {
-    this.sort("pant:dateUploaded")
-  }
-
-  private sort(key: string) {
-    // Switch the direction each time some clicks.
-    this.setSortedUp()
-    this.setState({sortKey: key }, () => {
-      this.getSortedRows()
-    }) 
-  };
-
-  private setSortedUp = () => {
-    this.setState({ isSortedUp: !this.state.isSortedUp }, () => {      this.getSortedRows()
-    })
+    this.setState({ isEmptyResults: false, isSearchException: false });
   };
 
   private setQuery = (prod: string) => {
     this.setState({ filterQuery: prod })
   };
 
-  private getSortedRows() {
-    fetch(this.buildSearchUrl())
-      .then(response => response.json())
-      .then(responseJSON => this.setState({
-        isEmptyResults: responseJSON.results === '[]',
-        nextPageRowCount: responseJSON.hasNextPage ? 1 : 0,
-        results: responseJSON.results
-       }))
-  };
-
   private buildSearchUrl() {
-    let backend = "/modules.json?search="
-    if (this.state.input != null) {
-      backend += this.state.input
-    }
-    backend += "&key=" + this.state.sortKey + "&direction=" + (this.state.isSortedUp ? "desc" : "asc")
+    let backend = "/modules.json?"
+    backend += this.state.filterQuery
     backend += "&offset=" + ((this.state.page - 1) * this.state.pageLimit) + "&limit=" + this.state.pageLimit
     return backend
   }

@@ -24,6 +24,7 @@ exports[`SearchFilter tests should render default Search component 1`] = `
             isValid={true}
             onChange={[Function]}
             type="text"
+            value=""
           />
           <Component
             aria-label="search button for search input"
@@ -147,6 +148,13 @@ exports[`SearchFilter tests should render default Search component 1`] = `
         >
           <FormSelectOption
             isDisabled={false}
+            key="Uploaded date"
+            label="Uploaded date"
+            required={false}
+            value="Uploaded date"
+          />
+          <FormSelectOption
+            isDisabled={false}
             key="Title"
             label="Title"
             required={false}
@@ -187,9 +195,10 @@ exports[`SearchFilter tests should render default Search component 1`] = `
       >
         <Component
           aria-label="search button for search input"
+          onClick={[Function]}
           variant="control"
         >
-          <SortAlphaUpIcon
+          <SortAlphaDownIcon
             color="currentColor"
             noVerticalAlign={false}
             size="sm"

@@ -6,6 +6,7 @@ import com.redhat.pantheon.model.module.Metadata;
 import com.redhat.pantheon.model.module.Module;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -52,9 +53,20 @@ public class ModuleListingServlet extends AbstractJsonQueryServlet {
         String[] productVersionIds = request.getParameterValues("productversion");
         String type = paramValue(request, "type");
 
-        if(!newArrayList("jcr:title", "jcr:description").contains(keyParam)) {
+        if(!newArrayList("Title", "Product", "Published", "Module", "Updated" ).contains(keyParam)) {
+            keyParam = "pant:dateUploaded";
+        } else if (keyParam.contains("Title")) {
+            keyParam = "jcr:title";
+        } else if (keyParam.contains("Published")){
+            keyParam = "pant:datePublished";
+        } else if (keyParam.contains("Module")){
+            keyParam = "pant:moduleType";
+        } else if (keyParam.contains("Updated")){
+            keyParam = JcrConstants.JCR_LASTMODIFIED;
+        } else {
             keyParam = "pant:dateUploaded";
         }
+
         if(!"desc".equals(directionParam)) {
             directionParam = "asc";
         }
@@ -67,11 +79,11 @@ public class ModuleListingServlet extends AbstractJsonQueryServlet {
             throw new RuntimeException(e);
         }
 
-        // Condition for module Use Case
-        String useCaseCondition = "";
+        // Condition for module type
+        String moduleTypeCondition = "";
         if(!Strings.isNullOrEmpty(type)) {
-            useCaseCondition = "AND (draft.[metadata/documentUseCase] = '" + type + "' " +
-                    "OR release.[metadata/documentUseCase] = '" + type + "') ";
+            moduleTypeCondition = "AND (draft.[metadata/moduleType] = '" + type + "' " +
+                    "OR release.[metadata/moduleType] = '" + type + "') ";
         }
 
         // product version conditions
@@ -101,7 +113,7 @@ public class ModuleListingServlet extends AbstractJsonQueryServlet {
                     .append("OR draft.[metadata/jcr:description] LIKE '%" + searchParam + "%' ")
                     .append("OR release.[metadata/jcr:title] LIKE '%" + searchParam + "%' ")
                     .append("OR release.[metadata/jcr:description] LIKE '%" + searchParam + "%') ")
-                .append(useCaseCondition)
+                .append(moduleTypeCondition)
                 .append(productVersionCondition);
 
         if(!isNullOrEmpty(keyParam) && !isNullOrEmpty(directionParam)) {

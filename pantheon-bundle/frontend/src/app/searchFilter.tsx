@@ -13,13 +13,17 @@ class SearchFilter extends Component<any, any> {
     this.state = {
       allProducts: [],
       chipGroups: [],
+      isSortedUp: true,
       moduleTypeValue: '',
-     //  this.props.value+"+sortBy="+this.state.sortByValue+"+""type="+this.state.moduleTypeValue+"+"
-      // 
       productOptions: [
         { value: '', label: 'Select a Product', disabled: false },
       ],
       productValue: '',
+      productsQueryParam: '',
+      productsToQuery: [],
+      productsUUID: [],
+      productversionsQueryParam: '',
+      searchText: '',
       sortByValue: '',
       versionOptions: [
         { value: '', label: 'Select a Version', disabled: false },
@@ -27,6 +31,7 @@ class SearchFilter extends Component<any, any> {
       versionSelected: '',
       versionUUID: '',
       versionValue: '',
+      versionsToQuery: [],
     };
   }
 
@@ -50,6 +55,7 @@ class SearchFilter extends Component<any, any> {
     ]
 
     const sortItems = [
+      { value: 'Uploaded date', label: 'Uploaded date', disabled: false },
       { value: 'Title', label: 'Title', disabled: false },
       { value: 'Product', label: 'Product', disabled: false },
       { value: 'Published date', label: 'Published date', disabled: false },
@@ -63,50 +69,50 @@ class SearchFilter extends Component<any, any> {
         <div className="row-filter" >
           <Grid gutter="md">
             <GridItem span={4}>
-            <InputGroup className="small-margin">
-                  <TextInput id="searchFilterInput" type="text" onKeyDown={this.props.onKeyDown} value={this.props.value} onChange={this.props.onChange} />
-                  <Button onClick={this.props.onClick} variant={ButtonVariant.control} aria-label="search button for search input">
-                    <SearchIcon />
-                  </Button>
-                </InputGroup>
+              <InputGroup className="small-margin">
+                <TextInput id="searchFilterInput" type="text" onKeyDown={this.props.onKeyDown} value={this.state.searchText} onChange={this.setSearchText} />
+                <Button onClick={this.props.onClick} variant={ButtonVariant.control} aria-label="search button for search input">
+                  <SearchIcon />
+                </Button>
+              </InputGroup>
             </GridItem>
 
             <GridItem span={3}>
-            <FormSelect value={this.state.productValue} onChange={this.onChangeProduct} aria-label="FormSelect Product" id="productForm">
-                  {this.state.productOptions.map((option, index) => (
-                    <FormSelectOption isDisabled={option.disabled} key={index} value={option.value} label={option.label} />
-                  ))}
-                </FormSelect>
+              <FormSelect value={this.state.productValue} onChange={this.onChangeProduct} aria-label="FormSelect Product" id="productForm">
+                {this.state.productOptions.map((option, index) => (
+                  <FormSelectOption isDisabled={option.disabled} key={index} value={option.value} label={option.label} />
+                ))}
+              </FormSelect>
             </GridItem>
 
             <GridItem span={2}>
-            <FormSelect className="small-margin" value={this.state.versionUUID} onChange={this.onChangeVersion} aria-label="FormSelect Version" id="productVersionForm">
-                  {verOptions.map((option) => (
-                    <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
-                  ))}
-                </FormSelect>
+              <FormSelect className="small-margin" value={this.state.versionUUID} onChange={this.onChangeVersion} aria-label="FormSelect Version" id="productVersionForm">
+                {verOptions.map((option) => (
+                  <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
+                ))}
+              </FormSelect>
             </GridItem>
 
             <GridItem span={1}>
-            <FormSelect className="small-margin" value={this.state.moduleTypeValue} onChange={this.onChangeModuleType} aria-label="FormSelect ModuleType" id="moduleTypeForm">
-                  {moduleTypeItems.map((option) => (
-                    <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
-                  ))}
-                </FormSelect>
+              <FormSelect className="small-margin" value={this.state.moduleTypeValue} onChange={this.onChangeModuleType} aria-label="FormSelect ModuleType" id="moduleTypeForm">
+                {moduleTypeItems.map((option) => (
+                  <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
+                ))}
+              </FormSelect>
             </GridItem>
 
             <GridItem span={1}>
-            <FormSelect className="small-margin" value={this.state.sortByValue} onChange={this.onChangeSort} aria-label="FormSelect Sort" id="sortForm">
-                  {sortItems.map((option) => (
-                    <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
-                  ))}
-                </FormSelect>
+              <FormSelect className="small-margin" value={this.state.sortByValue} onChange={this.onChangeSort} aria-label="FormSelect Sort" id="sortForm">
+                {sortItems.map((option) => (
+                  <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
+                ))}
+              </FormSelect>
             </GridItem>
 
             <GridItem span={1}>
-            <Button onClick={this.props.onSort} variant={ButtonVariant.control} aria-label="search button for search input">
-                  {this.props.isSortedUp ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
-                </Button>
+              <Button onClick={this.setSortedUp} variant={ButtonVariant.control} aria-label="search button for search input">
+                {this.state.isSortedUp ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
+              </Button>
             </GridItem>
           </Grid>
   
@@ -127,11 +133,21 @@ class SearchFilter extends Component<any, any> {
     );
   }
 
+  private setSearchText = (event) => this.setState({ searchText: event }, () => {
+    this.setQuery();
+  });
+
+  private setSortedUp = () => {
+    this.setState({ isSortedUp: !this.state.isSortedUp }, () => {
+      this.setQuery()
+    })
+  };
+
   private fetchProductVersionDetails = () => {
 
     const path = '/content/products.harray.3.json'
-    let key
     const products = new Array()
+    const prodUUID = new Array()
 
     fetch(path)
       .then((response) => {
@@ -156,7 +172,8 @@ class SearchFilter extends Component<any, any> {
               // console.log("version uuid:",versionDetails[i]["jcr:uuid"])
               versions.push({ value: detail[Fields.JCR_UUID], label: detail.__name__, disabled: false })
           }
-          products[pName] = versions    
+          products[pName] = versions
+          prodUUID[pName] = prod[Fields.JCR_UUID]
       }
         this.setState({
           allProducts: products
@@ -212,22 +229,47 @@ class SearchFilter extends Component<any, any> {
 
   private deleteItem = (id) => (event: any) => {
     const copyOfChipGroups = this.state.chipGroups;
+    let product = ''
     for (let i = 0; copyOfChipGroups.length > i; i++) {
       const index = copyOfChipGroups[i].chips.indexOf(id);
       if (index !== -1) {
+        const categoryKey = "category"
+        product = copyOfChipGroups[i][categoryKey]
         copyOfChipGroups[i].chips.splice(index, 1);
         // check if this is the last item in the group category
         if (copyOfChipGroups[i].chips.length === 0) {
           copyOfChipGroups.splice(i, 1);
-          this.setState({ chipGroups: copyOfChipGroups }, () => {
-            this.setQuery();
-        });
-        } else {
-          this.setState({ chipGroups: copyOfChipGroups }, () => {
-            this.setQuery();
-        });
         }
       }
+    }
+
+    const uuidKey = "value"
+    const versionUUID = this.state.allProducts[product].filter((e) => e.label === id)[0][uuidKey]
+    const productUUID = this.state.productsUUID[product]
+    if (versionUUID === "All") {
+      let prodQuery = this.state.productsQueryParam
+      prodQuery = prodQuery.replace("product=" + productUUID, '')
+      if (prodQuery === '&') {
+        prodQuery = ''
+      }
+      if (prodQuery.includes("&&")) {
+        prodQuery = prodQuery.replace('&&', '&')
+      }
+      this.setState({ chipGroups: copyOfChipGroups, productsQueryParam: prodQuery }, () => {
+        this.setQuery();
+      });
+    } else {
+      let verQuery = this.state.productversionsQueryParam
+      verQuery = verQuery.replace("productversion=" + versionUUID, '')
+      if (verQuery === '&') {
+        verQuery = ''
+      }
+      if (verQuery.includes("&&")) {
+        verQuery = verQuery.replace('&&', '&')
+      }
+      this.setState({ chipGroups: copyOfChipGroups, productversionsQueryParam: verQuery }, () => {
+        this.setQuery();
+      });
     }
   };
 
@@ -252,7 +294,7 @@ class SearchFilter extends Component<any, any> {
         }
 
       }
-      if (!chipExists) {
+      if (!chipExists && this.state.versionSelected !== "Select a Version") {
         copyOfChipGroups[index].chips.push(this.state.versionSelected);
       }
     } else {
@@ -261,16 +303,77 @@ class SearchFilter extends Component<any, any> {
         chips: [this.state.versionSelected]
       })
     }
-    this.setState({ chipGroups: copyOfChipGroups }, () => {
+
+    const uuidKey = "value"
+    const versionUUID = this.state.allProducts[this.state.productValue].filter((e) => e.label === this.state.versionValue)[0][uuidKey]
+    // If version is All just add the product.
+    let prodQuery = this.state.productsQueryParam
+    let verQuery = this.state.productversionsQueryParam
+    if (versionUUID === "All") {
+      if (this.state.productsQueryParam !== '') {
+        prodQuery += '&'
+      }
+      prodQuery += "product=" + this.state.productsUUID[this.state.productValue]
+    } else if (versionUUID !== "") {
+      if (this.state.productversionsQueryParam !== '') {
+        verQuery += '&'
+      }
+      verQuery += "productversion=" + versionUUID
+    }
+
+    this.setState({ chipGroups: copyOfChipGroups, productsQueryParam: prodQuery, productversionsQueryParam: verQuery }, () => {
       this.setQuery();
-  });
+    });
   };
 
   // Should be called after each change of state
   private setQuery = () => {
-    this.props.filterQuery("search="+this.props.value+"&product="+this.state.productUUID+"&productversion="+this.state.versionUUID+"&type="+this.state.moduleTypeValue+"&key="+this.state.sortByValue+"&direction="+this.props.isSortedUp)
-  }
+    let searchQuery = ""
+    if (this.state.searchText !== "") {
+      searchQuery += "search=" + this.state.searchText
+    }
 
+    if (this.state.productsQueryParam !== "") {
+      if (searchQuery !== "") {
+        searchQuery += "&"
+      }
+      searchQuery += this.state.productsQueryParam
+    }
+
+    if (this.state.productversionsQueryParam !== "") {
+      if (searchQuery !== "") {
+        searchQuery += "&"
+      }
+      searchQuery += this.state.productversionsQueryParam
+    }
+
+    // Default is All and should not add to the filter.
+    if (this.state.moduleTypeValue !== "" && this.state.moduleTypeValue !== "All") {
+      if (searchQuery !== "") {
+        searchQuery += "&"
+      }
+      searchQuery += "type=" + this.state.moduleTypeValue
+    }
+
+    // Default key is Uploaded
+    if (searchQuery !== "") {
+      searchQuery += "&"
+    }
+    if (this.state.sortByValue === "") {
+      searchQuery += "key=Uploaded"
+    } else {
+      searchQuery += "key=" + this.state.sortByValue
+    }
+
+    // isSortedUp is a boolean and will always have a set default
+    if (searchQuery !== "") {
+      searchQuery += "&"
+    }
+    searchQuery += "direction=" + (this.state.isSortedUp ? "desc" : "asc")
+
+    this.props.filterQuery(searchQuery)
+    console.log("This is the query: " + searchQuery)
+  }
 }
 
 export { SearchFilter }; 

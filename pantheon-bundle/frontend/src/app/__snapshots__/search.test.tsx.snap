@@ -6,12 +6,8 @@ exports[`Search tests should render default Search component 1`] = `
     <div>
       <SearchFilter
         filterQuery={[Function]}
-        isSortedUp={true}
-        onChange={[Function]}
         onClick={[Function]}
         onKeyDown={[Function]}
-        onSort={[Function]}
-        value=""
       />
       <div
         className="notification-container"
@@ -54,26 +50,24 @@ exports[`Search tests should render default Search component 1`] = `
                   <DataListCell
                     width={2}
                   >
-                    <button
-                      aria-label="sort column by name"
-                      className="sp-prop"
+                    <span
+                      aria-label="column name"
+                      className="sp-prop-nosort"
                       id="span-name"
-                      onClick={[Function]}
                     >
                       Name
-                    </button>
+                    </span>
                   </DataListCell>,
                   <DataListCell
                     width={2}
                   >
-                    <button
-                      aria-label="sort column by description"
-                      className="sp-prop"
+                    <span
+                      aria-label="column description"
+                      className="sp-prop-nosort"
                       id="span-name"
-                      onClick={[Function]}
                     >
                       Description
-                    </button>
+                    </span>
                   </DataListCell>,
                   <DataListCell>
                     <span
@@ -92,14 +86,13 @@ exports[`Search tests should render default Search component 1`] = `
                     </span>
                   </DataListCell>,
                   <DataListCell>
-                    <button
-                      aria-label="sort column by upload time"
-                      className="sp-prop"
+                    <span
+                      aria-label="column upload time"
+                      className="sp-prop-nosort"
                       id="span-name"
-                      onClick={[Function]}
                     >
                       Upload Time
-                    </button>
+                    </span>
                   </DataListCell>,
                 ]
               }
@@ -108,60 +101,26 @@ exports[`Search tests should render default Search component 1`] = `
           <DataListItemRow
             id="data-rows"
           />
-          <DataListItemRow
-            id="data-rows"
-            key="0"
+          <Level
+            gutter="md"
           >
-            <Checkbox
-              aria-label="controlled checkbox example"
-              aria-labelledby="width-ex3-check1"
-              checked={false}
-              className="checkbox"
-              id=""
-              isChecked={false}
-              isDisabled={false}
-              isValid={true}
-              key="checked_0"
-              name=""
-              onChange={[Function]}
-            />
-            <DataListItemCells
-              dataListCells={
-                Array [
-                  <DataListCell
-                    width={2}
-                  >
-                    <Link
-                      to=""
-                    >
-                      
-                    </Link>
-                  </DataListCell>,
-                  <DataListCell
-                    width={2}
-                  >
-                    <span>
-                      
-                    </span>
-                  </DataListCell>,
-                  <DataListCell>
-                    <span />
-                  </DataListCell>,
-                  <DataListCell>
-                    <span>
-                      
-                    </span>
-                  </DataListCell>,
-                  <DataListCell>
-                    <span>
-                      
-                    </span>
-                  </DataListCell>,
-                ]
-              }
-              key="cells_0"
-            />
-          </DataListItemRow>
+            <LevelItem />
+            <LevelItem>
+              <div
+                className="notification-container"
+              >
+                <br />
+                <br />
+                <img
+                  alt="Spinlogo"
+                  src="test-file-stub"
+                />
+                <br />
+                <br />
+              </div>
+            </LevelItem>
+            <LevelItem />
+          </Level>
           <DataListItemRow
             id="data-rows"
           />
@@ -193,7 +152,11 @@ exports[`Search tests should render default Search component 1`] = `
 
 exports[`Search tests test buildSearchUrl function 1`] = `undefined`;
 
+exports[`Search tests test buildTransientPathArray function 1`] = `undefined`;
+
 exports[`Search tests test cancelDeleteOperation function 1`] = `undefined`;
+
+exports[`Search tests test changePerPageLimit function 1`] = `undefined`;
 
 exports[`Search tests test confirmDeleteOperation function 1`] = `undefined`;
 
