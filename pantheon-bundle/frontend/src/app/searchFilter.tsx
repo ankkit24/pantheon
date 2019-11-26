@@ -168,8 +168,6 @@ class SearchFilter extends Component<any, any> {
           const versions = [{ value: '', label: 'Select a Version', disabled: false }]
 
           for (const detail of versionDetails) {
-              // console.log("version name:",versionDetails[i].__name__)
-              // console.log("version uuid:",versionDetails[i]["jcr:uuid"])
               versions.push({ value: detail[Fields.JCR_UUID], label: detail.__name__, disabled: false })
           }
           products[pName] = versions
@@ -246,7 +244,7 @@ class SearchFilter extends Component<any, any> {
     const uuidKey = "value"
     const versionUUID = this.state.allProducts[product].filter((e) => e.label === id)[0][uuidKey]
     const productUUID = this.state.productsUUID[product]
-    if (versionUUID === "All") {
+    if (versionUUID.trim() === "All") {
       let prodQuery = this.state.productsQueryParam
       prodQuery = prodQuery.replace("product=" + productUUID, '')
       if (prodQuery === '&') {
@@ -294,7 +292,7 @@ class SearchFilter extends Component<any, any> {
         }
 
       }
-      if (!chipExists && this.state.versionSelected !== "Select a Version") {
+      if (!chipExists && this.state.versionSelected.trim() !== "Select a Version") {
         copyOfChipGroups[index].chips.push(this.state.versionSelected);
       }
     } else {
@@ -309,7 +307,7 @@ class SearchFilter extends Component<any, any> {
     // If version is All just add the product.
     let prodQuery = this.state.productsQueryParam
     let verQuery = this.state.productversionsQueryParam
-    if (versionUUID === "All") {
+    if (versionUUID.trim() === "All") {
       if (this.state.productsQueryParam.trim() !== "") {
         prodQuery += '&'
       }
@@ -348,7 +346,7 @@ class SearchFilter extends Component<any, any> {
     }
 
     // Default is All and should not add to the filter.
-    if (this.state.moduleTypeValue.trim() !== "" && this.state.moduleTypeValue !== "All") {
+    if (this.state.moduleTypeValue.trim() !== "" && this.state.moduleTypeValue.trim() !== "All") {
       if (searchQuery.trim() !== "") {
         searchQuery += "&"
       }
