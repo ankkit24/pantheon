@@ -15,7 +15,6 @@ describe('SearchFilter tests', () => {
     expect(view).toMatchSnapshot();
   });
 
-
   it('test fetchProductVersionDetails function', () => {
     const wrapper = renderer.create(<SearchFilter />);
     const inst = wrapper.getInstance()

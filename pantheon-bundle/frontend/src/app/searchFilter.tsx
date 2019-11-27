@@ -8,10 +8,12 @@ import { Grid, GridItem } from '@patternfly/react-core';
 import { Fields } from '@app/Constants'
 
 class SearchFilter extends Component<any, any> {
+  public verOptions
+
   constructor(props) {
     super(props);
     this.state = {
-      allProducts: [],
+      allProducts: [{prodName: '', prodVersions: {}}],
       chipGroups: [],
       isSortedUp: true,
       moduleTypeValue: '',
@@ -42,10 +44,23 @@ class SearchFilter extends Component<any, any> {
   public render() {
     const { chipGroups } = this.state;
 
-    let verOptions = this.state.versionOptions
-    if (this.state.allProducts[this.state.productValue]) {
-      verOptions = this.state.allProducts[this.state.productValue]
+
+    for(const product of this.state.allProducts){
+      if(product.prodName===this.state.productValue){
+        this.verOptions = this.state.versionOptions
+        for(const version of product.prodVersions){
+          if(version.value!==''){
+            this.verOptions.push(version)
+          }
+        }
+        // console.log('verOptions:',this.verOptions)
+      }
     }
+    
+    // if (this.state.allProducts[this.state.productValue]) {
+    //   verOptions = this.state.allProducts[this.state.productValue]
+    //   console.log("verOptions: ", verOptions)
+    // }
 
     const moduleTypeItems = [
       { value: 'All', label: 'All', disabled: false },
@@ -87,7 +102,7 @@ class SearchFilter extends Component<any, any> {
 
             <GridItem span={2}>
               <FormSelect className="small-margin" value={this.state.versionUUID} onChange={this.onChangeVersion} aria-label="FormSelect Version" id="productVersionForm">
-                {verOptions.map((option) => (
+                {this.verOptions.map((option) => (
                   <FormSelectOption isDisabled={false} key={option.value} value={option.value} label={option.label} required={false} />
                 ))}
               </FormSelect>
@@ -146,7 +161,7 @@ class SearchFilter extends Component<any, any> {
   private fetchProductVersionDetails = () => {
 
     const path = '/content/products.harray.3.json'
-    const products = new Array()
+    const products = [{prodName: '', prodVersions: {}}]
     const prodUUID = new Array()
 
     fetch(path)
@@ -170,18 +185,23 @@ class SearchFilter extends Component<any, any> {
           for (const detail of versionDetails) {
               versions.push({ value: detail[Fields.JCR_UUID], label: detail.__name__, disabled: false })
           }
-          products[pName] = versions
+          products.push({prodName: pName, prodVersions: versions})
           prodUUID[pName] = prod[Fields.JCR_UUID]
       }
+      console.log('pdts after for loop:', products)
+      console.log('pdtsUUIDs after loop:', prodUUID)
         this.setState({
           allProducts: products
+        },()=>{
+          console.log("all products:", this.state.allProducts)
         })
-
         if (products) {
           const productItems = [{ value: 'Select a Product', label: 'Select a Product', disabled: false },]
           
           for (const item of products) {
-            productItems.push({ value: item, label: item, disabled: false })
+            if(item.prodName !== ''){
+              productItems.push({ value: item.prodName, label: item.prodName, disabled: false })
+            }
           }
           if (productItems.length > 1) {
             this.setState({ productOptions: productItems })
